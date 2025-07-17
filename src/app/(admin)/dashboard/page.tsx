@@ -6,7 +6,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { BarChart, DollarSign, Package, Users } from 'lucide-react';
 import { differenceInDays } from 'date-fns';
-import type { User, Product, Offer } from '@/lib/types'; // Assuming Invoice is also in types
+import type { User, Product } from '@/lib/types';
 
 interface Invoice {
   id: string;
@@ -44,7 +44,7 @@ export default function DashboardPage() {
     });
     setActiveClients(activeUsers.length);
 
-    // Calculate Products in Stock
+    // Calculate Products in Stock and Low Stock products
     const storedProducts = localStorage.getItem('click-shop-products');
     if (storedProducts) {
       const products: Product[] = JSON.parse(storedProducts);

@@ -23,7 +23,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, AlertTriangle } from 'lucide-react';
 
 const productSchema = z.object({
     name: z.string().min(3, "El nombre debe tener al menos 3 caracteres.").trim(),
@@ -176,6 +176,7 @@ export default function InventoryPage() {
                     <TableHead>Producto</TableHead>
                     <TableHead>Categoría</TableHead>
                     <TableHead>Stock</TableHead>
+                    <TableHead>Estado</TableHead>
                     <TableHead className="text-right">Precio</TableHead>
                 </TableRow>
                 </TableHeader>
@@ -187,11 +188,23 @@ export default function InventoryPage() {
                         <Badge variant="outline">{product.category}</Badge>
                     </TableCell>
                     <TableCell>{product.stock}</TableCell>
+                    <TableCell>
+                        {product.stock === 0 ? (
+                           <Badge variant="destructive">Agotado</Badge>
+                        ) : product.stock < 5 ? (
+                            <Badge variant="destructive" className="bg-yellow-500 text-yellow-900 hover:bg-yellow-500/80">
+                                <AlertTriangle className="h-3 w-3 mr-1" />
+                                Stock Bajo
+                            </Badge>
+                        ) : (
+                            <Badge variant="default">En Stock</Badge>
+                        )}
+                    </TableCell>
                     <TableCell className="text-right">${product.price.toFixed(2)}</TableCell>
                     </TableRow>
                 )) : (
                     <TableRow>
-                        <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
+                        <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
                             No hay productos en el inventario.
                         </TableCell>
                     </TableRow>
