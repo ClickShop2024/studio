@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { ReactNode } from 'react';
@@ -72,9 +73,29 @@ export function AppLayout({ children }: { children: ReactNode }) {
   }
 
   const getPageTitle = () => {
-    const allNavItems = [...mainNavItems, ...adminNavItems];
-    return allNavItems.find(item => pathname === item.href)?.label || 'Click Shop';
+    // Combine all navigation items for title lookup
+    const allNavItems = [
+        ...mainNavItems,
+        ...adminNavItems,
+        // Add any other navigation items that are not in the sidebar but should have a title
+        { href: '/settings', label: 'Configuración', icon: Settings, roles: ['Customer', 'Employee', 'Administrator'] },
+    ];
+    
+    // Find a matching item for the current path
+    const currentNavItem = allNavItems.find(item => pathname === item.href);
+
+    if (currentNavItem) {
+        return currentNavItem.label;
+    }
+    
+    // Fallback for dynamic routes or pages not in navigation
+    if (pathname.startsWith('/dashboard')) {
+        return 'Dashboard';
+    }
+
+    return 'Click Shop';
   }
+
 
   return (
     <SidebarProvider>
@@ -91,7 +112,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
               {navItems.map((item) => (
                 <SidebarMenuItem key={item.label}>
                   <Link href={item.href} legacyBehavior passHref>
-                    <SidebarMenuButton isActive={pathname === item.href}>
+                    <SidebarMenuButton isActive={pathname.startsWith(item.href) && (item.href !== '/' || pathname === '/')}>
                       <item.icon />
                       <span>{item.label}</span>
                     </SidebarMenuButton>

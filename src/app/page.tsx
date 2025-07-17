@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -13,16 +14,24 @@ import { NotificationDialog } from '@/components/notification-dialog';
 export default function Home() {
   const { user, favorites, isAuthenticated } = useAuth();
 
-  const categories = ['Dama', 'Vestidos', 'Accesorios', 'Ofertas', 'Favoritos'];
+  const categories = ['Ropa femenina', 'Accesorios', 'Calzado', 'Especiales', 'Favoritos'];
   
   const getProductsForTab = (tab: string): Product[] => {
     if (tab === 'Favoritos') {
       return isAuthenticated ? products.filter(p => favorites.includes(p.id)) : [];
     }
-    // A product can be on offer and in another category.
-    // For this mock, 'Ofertas' is a category, but in a real app this might be a flag.
-    if (tab === 'Ofertas') {
+    if (tab === 'Especiales') {
         return products.filter(p => p.category === 'Ofertas' || p.price < 40);
+    }
+    if (tab === 'Ropa femenina') {
+      return products.filter(p => p.category === 'Dama' || p.category === 'Vestidos');
+    }
+    if (tab === 'Accesorios') {
+      return products.filter(p => p.category === 'Accesorios');
+    }
+    // Placeholder for Calzado
+    if (tab === 'Calzado') {
+      return [];
     }
     return products.filter(p => p.category === tab);
   };
@@ -37,7 +46,7 @@ export default function Home() {
 
       {user?.role === 'Customer' && <SmartSuggestions />}
 
-      <Tabs defaultValue="Dama" className="w-full">
+      <Tabs defaultValue="Ropa femenina" className="w-full">
         <TabsList className="grid w-full grid-cols-3 sm:grid-cols-5">
           {categories.map((cat) => (
             <TabsTrigger key={cat} value={cat} disabled={cat === 'Favoritos' && !isAuthenticated}>{cat}</TabsTrigger>
