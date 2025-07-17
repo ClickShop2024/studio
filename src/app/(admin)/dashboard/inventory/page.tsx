@@ -26,7 +26,7 @@ import { useToast } from '@/hooks/use-toast';
 import { PlusCircle } from 'lucide-react';
 
 const productSchema = z.object({
-    name: z.string().min(3, "El nombre debe tener al menos 3 caracteres."),
+    name: z.string().min(3, "El nombre debe tener al menos 3 caracteres.").trim(),
     category: z.enum(['Dama', 'Vestidos', 'Accesorios', 'Ofertas']),
     price: z.coerce.number().positive("El precio debe ser un número positivo."),
     stock: z.coerce.number().int().nonnegative("El stock no puede ser negativo."),
@@ -69,22 +69,47 @@ export default function InventoryPage() {
   }, []);
 
   const onSubmit = (values: z.infer<typeof productSchema>) => {
-    const newProduct: Product = {
-        id: crypto.randomUUID(),
-        ...values,
-        image: 'https://placehold.co/600x800', // Default placeholder
-        dataAiHint: values.name.split(' ').slice(0,2).join(' ').toLowerCase(),
-        category: values.category as Product['category'],
-    };
+    const existingProductIndex = products.findIndex(p => p.name.toLowerCase() === values.name.toLowerCase());
+    
+    if (existingProductIndex !== -1) {
+        // Product exists, update its stock
+        const updatedProducts = [...products];
+        const productToUpdate = updatedProducts[existingProductIndex];
+        
+        productToUpdate.stock += values.stock;
+        // Also update other details in case they changed
+        productToUpdate.price = values.price;
+        productToUpdate.category = values.category as Product['category'];
+        productToUpdate.description = values.description;
+        
+        setProducts(updatedProducts);
+        localStorage.setItem('click-shop-products', JSON.stringify(updatedProducts));
 
-    const updatedProducts = [...products, newProduct];
-    setProducts(updatedProducts);
-    localStorage.setItem('click-shop-products', JSON.stringify(updatedProducts));
+        toast({
+            title: "Producto existente",
+            description: `Se ha actualizado el stock de "${productToUpdate.name}".`,
+        });
 
-    toast({
-        title: "Producto Registrado",
-        description: `El producto "${newProduct.name}" ha sido añadido al inventario.`,
-    });
+    } else {
+        // Product is new, add it
+        const newProduct: Product = {
+            id: crypto.randomUUID(),
+            ...values,
+            image: 'https://placehold.co/600x800', // Default placeholder
+            dataAiHint: values.name.split(' ').slice(0,2).join(' ').toLowerCase(),
+            category: values.category as Product['category'],
+        };
+
+        const updatedProducts = [...products, newProduct];
+        setProducts(updatedProducts);
+        localStorage.setItem('click-shop-products', JSON.stringify(updatedProducts));
+
+        toast({
+            title: "Producto Registrado",
+            description: `El producto "${newProduct.name}" ha sido añadido al inventario.`,
+        });
+    }
+    
     form.reset();
   }
 
@@ -97,8 +122,8 @@ export default function InventoryPage() {
 
       <Card>
         <CardHeader>
-            <CardTitle>Registrar Nuevo Producto</CardTitle>
-            <CardDescription>Completa el formulario para añadir un artículo al inventario.</CardDescription>
+            <CardTitle>Registrar o Actualizar Producto</CardTitle>
+            <CardDescription>Completa el formulario. Si el producto ya existe por nombre, se actualizará su stock.</CardDescription>
         </CardHeader>
         <CardContent>
             <Form {...form}>
@@ -123,7 +148,7 @@ export default function InventoryPage() {
                         <FormItem><FormLabel>Precio (USD)</FormLabel><FormControl><Input type="number" step="0.01" placeholder="Ej: 49.99" {...field} /></FormControl><FormMessage /></FormItem>
                     )}/>
                      <FormField control={form.control} name="stock" render={({ field }) => (
-                        <FormItem><FormLabel>Cantidad en Stock</FormLabel><FormControl><Input type="number" placeholder="Ej: 25" {...field} /></FormControl><FormMessage /></FormItem>
+                        <FormItem><FormLabel>Cantidad a Añadir</FormLabel><FormControl><Input type="number" placeholder="Ej: 25" {...field} /></FormControl><FormMessage /></FormItem>
                     )}/>
                     <FormField control={form.control} name="description" render={({ field }) => (
                         <FormItem className="md:col-span-2 lg:col-span-3"><FormLabel>Descripción</FormLabel><FormControl><Textarea placeholder="Describe el producto..." {...field} /></FormControl><FormMessage /></FormItem>
@@ -131,7 +156,7 @@ export default function InventoryPage() {
                     <div className="md:col-span-2 lg:col-span-3">
                         <Button type="submit" className="w-full md:w-auto">
                             <PlusCircle className="mr-2 h-4 w-4" />
-                            Registrar Producto
+                            Registrar / Actualizar Stock
                         </Button>
                     </div>
                 </form>
