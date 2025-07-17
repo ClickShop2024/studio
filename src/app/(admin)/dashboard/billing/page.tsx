@@ -103,14 +103,18 @@ export default function BillingPage() {
     setInvoices(prev => [newInvoice, ...prev]);
 
     // Update stock
-    const newProducts = [...products];
-    cart.forEach(cartItem => {
-        const productIndex = newProducts.findIndex(p => p.id === cartItem.id);
-        if (productIndex !== -1) {
-            newProducts[productIndex].stock -= cartItem.quantity;
-        }
+    setProducts(currentProducts => {
+        const updatedProducts = [...currentProducts];
+        cart.forEach(cartItem => {
+            const productIndex = updatedProducts.findIndex(p => p.id === cartItem.id);
+            if (productIndex !== -1) {
+                updatedProducts[productIndex].stock -= cartItem.quantity;
+            }
+        });
+        // Here you would typically save the updated products list to your backend/DB
+        // For this demo, we just update the state.
+        return updatedProducts;
     });
-    setProducts(newProducts);
     
     // Clear form
     setCart([]);
@@ -159,7 +163,7 @@ export default function BillingPage() {
                                    </TableRow>
                                </TableHeader>
                                <TableBody>
-                                   {products.map(p => (
+                                   {products.filter(p => p.stock > 0).map(p => (
                                        <TableRow key={p.id}>
                                            <TableCell>{p.name}</TableCell>
                                            <TableCell>{p.stock}</TableCell>

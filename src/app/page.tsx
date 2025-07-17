@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { products } from '@/lib/data';
+import { products as initialProducts } from '@/lib/data';
 import type { Product } from '@/lib/types';
 import { ProductCard } from '@/components/product-card';
 import { useAuth } from '@/hooks/use-auth';
@@ -16,26 +16,28 @@ import { Search } from 'lucide-react';
 
 export default function Home() {
   const { user, favorites, isAuthenticated } = useAuth();
+  const [products, setProducts] = useState(initialProducts);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeCategory, setActiveCategory] = useState('Todos');
 
   const categories = ['Todos', 'Ropa femenina', 'Accesorios', 'Calzado', 'Especiales', 'Favoritos'];
 
   const getProductsByCategory = (category: string): Product[] => {
+    const availableProducts = products.filter(p => p.stock > 0);
     switch (category) {
       case 'Todos':
-        return products;
+        return availableProducts;
       case 'Ropa femenina':
-        return products.filter(p => p.category === 'Dama' || p.category === 'Vestidos');
+        return availableProducts.filter(p => p.category === 'Dama' || p.category === 'Vestidos');
       case 'Accesorios':
-        return products.filter(p => p.category === 'Accesorios');
+        return availableProducts.filter(p => p.category === 'Accesorios');
       case 'Calzado':
         // Placeholder, no products in this category yet
         return [];
       case 'Especiales':
-        return products.filter(p => p.category === 'Ofertas' || p.price < 40);
+        return availableProducts.filter(p => p.category === 'Ofertas' || p.price < 40);
       case 'Favoritos':
-        return isAuthenticated ? products.filter(p => favorites.includes(p.id)) : [];
+        return isAuthenticated ? availableProducts.filter(p => favorites.includes(p.id)) : [];
       default:
         return [];
     }
@@ -95,8 +97,8 @@ export default function Home() {
                 <Link href="/login" className="underline font-semibold text-primary">Inicia sesión</Link> para ver tus favoritos.
               </p>
             ) : (
-              <p className="text-muted-foreground">
-                No se encontraron productos que coincidan con tu búsqueda o filtro.
+                 <p className="text-muted-foreground">
+                {activeCategory === 'Todos' && searchTerm === '' ? 'Todos los productos están agotados.' : 'No se encontraron productos que coincidan con tu búsqueda o filtro.'}
               </p>
             )}
           </div>
