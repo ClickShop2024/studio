@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { products as initialProducts } from '@/lib/data';
 import type { Product } from '@/lib/types';
@@ -16,9 +16,28 @@ import { Search } from 'lucide-react';
 
 export default function Home() {
   const { user, favorites, isAuthenticated } = useAuth();
-  const [products, setProducts] = useState(initialProducts);
+  const [products, setProducts] = useState<Product[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeCategory, setActiveCategory] = useState('Todos');
+
+  useEffect(() => {
+    const storedProducts = localStorage.getItem('click-shop-products');
+    if (storedProducts) {
+      setProducts(JSON.parse(storedProducts));
+    } else {
+      setProducts(initialProducts);
+    }
+    // Set up a listener for storage changes to sync across tabs
+    const handleStorageChange = (event: StorageEvent) => {
+        if (event.key === 'click-shop-products' && event.newValue) {
+            setProducts(JSON.parse(event.newValue));
+        }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+        window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
 
   const categories = ['Todos', 'Ropa femenina', 'Accesorios', 'Calzado', 'Especiales', 'Favoritos'];
 
@@ -107,3 +126,5 @@ export default function Home() {
     </div>
   );
 }
+
+    

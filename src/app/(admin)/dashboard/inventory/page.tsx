@@ -1,3 +1,7 @@
+
+"use client";
+
+import { useState, useEffect } from 'react';
 import {
   Table,
   TableBody,
@@ -7,9 +11,33 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { products } from "@/lib/data"
+import { products as initialProducts } from "@/lib/data"
+import type { Product } from '@/lib/types';
 
 export default function InventoryPage() {
+  const [products, setProducts] = useState<Product[]>([]);
+
+  useEffect(() => {
+    const storedProducts = localStorage.getItem('click-shop-products');
+    if (storedProducts) {
+      setProducts(JSON.parse(storedProducts));
+    } else {
+      setProducts(initialProducts);
+    }
+
+    const handleStorageChange = (event: StorageEvent) => {
+        if (event.key === 'click-shop-products' && event.newValue) {
+            setProducts(JSON.parse(event.newValue));
+        }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+        window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
+
   return (
     <div className="space-y-4">
       <h1 className="text-3xl font-bold">Gestión de Inventario</h1>
@@ -39,3 +67,5 @@ export default function InventoryPage() {
     </div>
   );
 }
+
+    

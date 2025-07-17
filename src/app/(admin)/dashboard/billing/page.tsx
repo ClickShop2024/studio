@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -11,8 +11,18 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { products as initialProducts } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from '@/components/ui/badge';
-import { PlusCircle, Trash2 } from 'lucide-react';
+import { PlusCircle, Trash2, RotateCcw } from 'lucide-react';
 import type { Product } from '@/lib/types';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 interface CartItem extends Product {
   quantity: number;
@@ -30,12 +40,31 @@ interface Invoice {
 
 export default function BillingPage() {
   const { toast } = useToast();
-  const [products, setProducts] = useState(initialProducts);
+  const [products, setProducts] = useState<Product[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [customerName, setCustomerName] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('');
   const [exchangeRate, setExchangeRate] = useState(1);
+  const [isAlertOpen, setIsAlertOpen] = useState(false);
+  const [invoiceToVoid, setInvoiceToVoid] = useState<Invoice | null>(null);
+
+  useEffect(() => {
+    // Load products from localStorage or use initial data
+    const storedProducts = localStorage.getItem('click-shop-products');
+    if (storedProducts) {
+      setProducts(JSON.parse(storedProducts));
+    } else {
+      setProducts(initialProducts);
+      localStorage.setItem('click-shop-products', JSON.stringify(initialProducts));
+    }
+    
+    // Load invoices from localStorage
+    const storedInvoices = localStorage.getItem('click-shop-invoices');
+    if (storedInvoices) {
+      setInvoices(JSON.parse(storedInvoices));
+    }
+  }, []);
 
   const handleAddProductToCart = (productId: string) => {
     const productToAdd = products.find(p => p.id === productId);
@@ -99,30 +128,68 @@ export default function BillingPage() {
       paymentMethod,
       status: 'Pagada',
     };
-
-    setInvoices(prev => [newInvoice, ...prev]);
-
-    // Update stock
-    setProducts(currentProducts => {
-        const updatedProducts = [...currentProducts];
-        cart.forEach(cartItem => {
-            const productIndex = updatedProducts.findIndex(p => p.id === cartItem.id);
-            if (productIndex !== -1) {
-                updatedProducts[productIndex].stock -= cartItem.quantity;
-            }
-        });
-        // Here you would typically save the updated products list to your backend/DB
-        // For this demo, we just update the state.
-        return updatedProducts;
-    });
     
-    // Clear form
+    const updatedInvoices = [newInvoice, ...invoices];
+    setInvoices(updatedInvoices);
+    localStorage.setItem('click-shop-invoices', JSON.stringify(updatedInvoices));
+
+    const updatedProducts = products.map(p => {
+        const cartItem = cart.find(ci => ci.id === p.id);
+        if (cartItem) {
+            return { ...p, stock: p.stock - cartItem.quantity };
+        }
+        return p;
+    });
+
+    setProducts(updatedProducts);
+    localStorage.setItem('click-shop-products', JSON.stringify(updatedProducts));
+    
     setCart([]);
     setCustomerName('');
     setPaymentMethod('');
 
     toast({ title: "Factura generada", description: `Factura ${newInvoice.id} creada exitosamente.` });
   };
+  
+  const handleVoidInvoiceClick = (invoice: Invoice) => {
+    if (invoice.status === 'Anulada') {
+        toast({ title: "Factura ya anulada", variant: 'destructive' });
+        return;
+    }
+    setInvoiceToVoid(invoice);
+    setIsAlertOpen(true);
+  }
+
+  const confirmVoidInvoice = () => {
+    if (!invoiceToVoid) return;
+
+    // Restore stock
+    const updatedProducts = products.map(p => {
+        const itemToRestore = invoiceToVoid.items.find(i => i.id === p.id);
+        if (itemToRestore) {
+            return { ...p, stock: p.stock + itemToRestore.quantity };
+        }
+        return p;
+    });
+    setProducts(updatedProducts);
+    localStorage.setItem('click-shop-products', JSON.stringify(updatedProducts));
+
+    // Update invoice status
+    const updatedInvoices = invoices.map(inv => 
+        inv.id === invoiceToVoid.id ? { ...inv, status: 'Anulada' } : inv
+    );
+    setInvoices(updatedInvoices);
+    localStorage.setItem('click-shop-invoices', JSON.stringify(updatedInvoices));
+    
+    toast({ title: "Factura anulada", description: `La factura ${invoiceToVoid.id} ha sido anulada y el stock restaurado.` });
+    
+    closeAlert();
+  };
+  
+  const closeAlert = () => {
+      setIsAlertOpen(false);
+      setInvoiceToVoid(null);
+  }
 
   return (
     <div className="space-y-8">
@@ -205,10 +272,10 @@ export default function BillingPage() {
                                                     <Input 
                                                         type="number" 
                                                         value={item.quantity}
-                                                        onChange={(e) => handleQuantityChange(item.id, parseInt(e.target.value))}
+                                                        onChange={(e) => handleQuantityChange(item.id, parseInt(e.target.value) || 0)}
                                                         className="w-20 h-8"
                                                         min="1"
-                                                        max={item.stock}
+                                                        max={products.find(p => p.id === item.id)?.stock}
                                                     />
                                                </TableCell>
                                                <TableCell className="text-right">${(item.price * item.quantity).toFixed(2)}</TableCell>
@@ -273,13 +340,14 @@ export default function BillingPage() {
                           <TableHead>Cliente</TableHead>
                           <TableHead>Método</TableHead>
                           <TableHead className="text-right">Total</TableHead>
-                          <TableHead className="text-right">Estado</TableHead>
+                          <TableHead>Estado</TableHead>
+                          <TableHead className="text-right">Acciones</TableHead>
                       </TableRow>
                   </TableHeader>
                   <TableBody>
                       {invoices.length === 0 ? (
                            <TableRow>
-                                <TableCell colSpan={6} className="text-center text-muted-foreground h-24">No hay facturas registradas.</TableCell>
+                                <TableCell colSpan={7} className="text-center text-muted-foreground h-24">No hay facturas registradas.</TableCell>
                            </TableRow>
                       ) : (
                           invoices.map(invoice => (
@@ -289,8 +357,14 @@ export default function BillingPage() {
                                   <TableCell>{invoice.customerName}</TableCell>
                                   <TableCell>{invoice.paymentMethod}</TableCell>
                                   <TableCell className="text-right">${invoice.total.toFixed(2)}</TableCell>
+                                  <TableCell>
+                                      <Badge variant={invoice.status === 'Pagada' ? 'default' : (invoice.status === 'Anulada' ? 'destructive' : 'secondary')}>{invoice.status}</Badge>
+                                  </TableCell>
                                   <TableCell className="text-right">
-                                      <Badge variant={invoice.status === 'Pagada' ? 'default' : 'secondary'}>{invoice.status}</Badge>
+                                    <Button variant="ghost" size="icon" onClick={() => handleVoidInvoiceClick(invoice)} disabled={invoice.status === 'Anulada'}>
+                                        <RotateCcw className="h-4 w-4" />
+                                        <span className="sr-only">Anular Factura</span>
+                                    </Button>
                                   </TableCell>
                               </TableRow>
                           ))
@@ -299,6 +373,23 @@ export default function BillingPage() {
               </Table>
           </CardContent>
       </Card>
+
+      <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
+          <AlertDialogContent>
+              <AlertDialogHeader>
+                  <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                      Estás a punto de anular la factura <strong>{invoiceToVoid?.id}</strong>. Esta acción no se puede deshacer y el stock de los productos será restaurado.
+                  </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                  <AlertDialogCancel onClick={closeAlert}>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction onClick={confirmVoidInvoice}>Confirmar Anulación</AlertDialogAction>
+              </AlertDialogFooter>
+          </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
+
+    
