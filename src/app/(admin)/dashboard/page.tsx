@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useAuth } from '@/hooks/use-auth';
@@ -6,6 +7,27 @@ import { BarChart, DollarSign, Package, Users } from 'lucide-react';
 
 export default function DashboardPage() {
   const { user } = useAuth();
+
+  // In a real app, you would fetch this data from your backend
+  // For now, we'll use placeholder data and logic can be added later.
+  const dashboardData = {
+    totalSales: {
+        amount: "45,231.89",
+        change: "+20.1% desde el mes pasado"
+    },
+    activeClients: {
+        count: "+2350",
+        change: "+180.1% desde el mes pasado"
+    },
+    productsInStock: {
+        count: "152",
+        description: "Total de productos disponibles"
+    },
+    conversionRate: {
+        rate: "+12.5%",
+        change: "Desde la semana pasada"
+    }
+  };
 
   if (!user) {
     return null;
@@ -24,8 +46,8 @@ export default function DashboardPage() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">$45,231.89</div>
-            <p className="text-xs text-muted-foreground">+20.1% desde el mes pasado</p>
+            <div className="text-2xl font-bold">${dashboardData.totalSales.amount}</div>
+            <p className="text-xs text-muted-foreground">{dashboardData.totalSales.change}</p>
           </CardContent>
         </Card>
         <Card>
@@ -34,8 +56,8 @@ export default function DashboardPage() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">+2350</div>
-            <p className="text-xs text-muted-foreground">+180.1% desde el mes pasado</p>
+            <div className="text-2xl font-bold">{dashboardData.activeClients.count}</div>
+            <p className="text-xs text-muted-foreground">{dashboardData.activeClients.change}</p>
           </CardContent>
         </Card>
         <Card>
@@ -44,8 +66,8 @@ export default function DashboardPage() {
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">152</div>
-            <p className="text-xs text-muted-foreground">Total de productos disponibles</p>
+            <div className="text-2xl font-bold">{dashboardData.productsInStock.count}</div>
+            <p className="text-xs text-muted-foreground">{dashboardData.productsInStock.description}</p>
           </CardContent>
         </Card>
         <Card>
@@ -54,8 +76,8 @@ export default function DashboardPage() {
             <BarChart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">+12.5%</div>
-            <p className="text-xs text-muted-foreground">Desde la semana pasada</p>
+            <div className="text-2xl font-bold">{dashboardData.conversionRate.rate}</div>
+            <p className="text-xs text-muted-foreground">{dashboardData.conversionRate.change}</p>
           </CardContent>
         </Card>
       </div>
