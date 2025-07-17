@@ -4,13 +4,14 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { BarChart, DollarSign, Package, Users, ShoppingCart, Eye } from 'lucide-react';
-import { differenceInDays } from 'date-fns';
+import { Button } from '@/components/ui/button';
+import { BarChart, DollarSign, Package, Users } from 'lucide-react';
+import { differenceInDays, isToday, isThisWeek, isThisMonth } from 'date-fns';
 import type { User, Product } from '@/lib/types';
 
 interface Invoice {
   id: string;
-  date: string;
+  date: string; // ISO String
   customerName: string;
   total: number;
   status: 'Pagada' | 'Pendiente' | 'Anulada';
@@ -21,9 +22,13 @@ interface ConversionData {
   details: string;
 }
 
+type SalesPeriod = 'day' | 'week' | 'month';
+
 export default function DashboardPage() {
   const { user, getAllUsers } = useAuth();
   const [totalSales, setTotalSales] = useState(0);
+  const [salesCount, setSalesCount] = useState(0);
+  const [salesPeriod, setSalesPeriod] = useState<SalesPeriod>('day');
   const [activeClients, setActiveClients] = useState(0);
   const [productsInStock, setProductsInStock] = useState(0);
   const [lowStockProducts, setLowStockProducts] = useState(0);
@@ -31,20 +36,24 @@ export default function DashboardPage() {
 
 
   useEffect(() => {
-    // This effect will run when the component mounts and also when any dependency changes.
-    // For a real-time feel, you might listen to custom events or re-fetch on navigation.
     function calculateMetrics() {
-        // Calculate Total Sales
         const storedInvoices = localStorage.getItem('click-shop-invoices');
-        if (storedInvoices) {
-          const invoices: Invoice[] = JSON.parse(storedInvoices);
-          const currentSales = invoices
-            .filter(inv => inv.status === 'Pagada')
-            .reduce((acc, inv) => acc + inv.total, 0);
-          setTotalSales(currentSales);
-        }
+        const invoices: Invoice[] = storedInvoices ? JSON.parse(storedInvoices) : [];
+        const validInvoices = invoices.filter(inv => inv.status === 'Pagada');
 
-        // Calculate Active Clients (last 30 days)
+        const salesFilters: Record<SalesPeriod, (date: Date) => boolean> = {
+            day: (date) => isToday(date),
+            week: (date) => isThisWeek(date, { weekStartsOn: 1 }),
+            month: (date) => isThisMonth(date),
+        };
+        
+        const periodFilter = salesFilters[salesPeriod];
+        const periodInvoices = validInvoices.filter(inv => periodFilter(new Date(inv.date)));
+
+        const currentSales = periodInvoices.reduce((acc, inv) => acc + inv.total, 0);
+        setTotalSales(currentSales);
+        setSalesCount(periodInvoices.length);
+
         const allUsers = getAllUsers();
         const now = new Date();
         const activeUsers = allUsers.filter(u => {
@@ -54,7 +63,6 @@ export default function DashboardPage() {
         });
         setActiveClients(activeUsers.length);
 
-        // Calculate Products in Stock and Low Stock products
         const storedProducts = localStorage.getItem('click-shop-products');
         if (storedProducts) {
           const products: Product[] = JSON.parse(storedProducts);
@@ -64,9 +72,8 @@ export default function DashboardPage() {
           setLowStockProducts(lowStock);
         }
         
-        // Calculate Conversion Rate
         const visits = parseInt(localStorage.getItem('click-shop-catalog-visits') || '0', 10);
-        const purchases = storedInvoices ? JSON.parse(storedInvoices).filter((inv: Invoice) => inv.status === 'Pagada').length : 0;
+        const purchases = validInvoices.length;
         
         if (visits > 0) {
             const rate = (purchases / visits) * 100;
@@ -84,7 +91,6 @@ export default function DashboardPage() {
 
     calculateMetrics();
     
-    // Listen for storage changes to re-calculate metrics for a more "real-time" feel
     const handleStorageChange = (e: StorageEvent) => {
         if (e.key === 'click-shop-invoices' || e.key === 'click-shop-products' || e.key === 'click-shop-catalog-visits') {
             calculateMetrics();
@@ -97,7 +103,15 @@ export default function DashboardPage() {
         window.removeEventListener('storage', handleStorageChange);
     };
 
-  }, [getAllUsers]);
+  }, [getAllUsers, salesPeriod]);
+
+  const getSalesPeriodText = () => {
+      switch(salesPeriod) {
+          case 'day': return `Ventas realizadas hoy`;
+          case 'week': return `Ventas de esta semana`;
+          case 'month': return `Ventas de este mes`;
+      }
+  }
 
 
   if (!user) {
@@ -113,12 +127,17 @@ export default function DashboardPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Ventas Totales (Pagadas)</CardTitle>
+            <CardTitle className="text-sm font-medium">Ventas Totales</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">${totalSales.toFixed(2)}</div>
-            <p className="text-xs text-muted-foreground">Suma de todas las facturas no anuladas.</p>
+            <p className="text-xs text-muted-foreground">{salesCount} {getSalesPeriodText()}</p>
+             <div className="flex gap-2 mt-2">
+                <Button size="sm" variant={salesPeriod === 'day' ? 'default' : 'outline'} onClick={() => setSalesPeriod('day')}>Hoy</Button>
+                <Button size="sm" variant={salesPeriod === 'week' ? 'default' : 'outline'} onClick={() => setSalesPeriod('week')}>Semana</Button>
+                <Button size="sm" variant={salesPeriod === 'month' ? 'default' : 'outline'} onClick={() => setSalesPeriod('month')}>Mes</Button>
+             </div>
           </CardContent>
         </Card>
         <Card>

@@ -30,7 +30,7 @@ interface CartItem extends Product {
 
 interface Invoice {
   id: string;
-  date: string;
+  date: string; // ISO String format
   customerName: string;
   items: CartItem[];
   total: number;
@@ -65,6 +65,20 @@ export default function BillingPage() {
       setInvoices(JSON.parse(storedInvoices));
     }
   }, []);
+  
+  const formatDisplayDate = (isoDate: string) => {
+      try {
+        return new Date(isoDate).toLocaleString('es-ES', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+      } catch {
+        return "Fecha inválida";
+      }
+  }
 
   const handleAddProductToCart = (productId: string) => {
     const productToAdd = products.find(p => p.id === productId);
@@ -121,7 +135,7 @@ export default function BillingPage() {
 
     const newInvoice: Invoice = {
       id: `INV-${Date.now()}`,
-      date: new Date().toLocaleString('es-ES'),
+      date: new Date().toISOString(),
       customerName: customerName || 'Cliente General',
       items: [...cart],
       total: cartTotal,
@@ -353,7 +367,7 @@ export default function BillingPage() {
                           invoices.map(invoice => (
                               <TableRow key={invoice.id}>
                                   <TableCell className="font-medium">{invoice.id}</TableCell>
-                                  <TableCell>{invoice.date}</TableCell>
+                                  <TableCell>{formatDisplayDate(invoice.date)}</TableCell>
                                   <TableCell>{invoice.customerName}</TableCell>
                                   <TableCell>{invoice.paymentMethod}</TableCell>
                                   <TableCell className="text-right">${invoice.total.toFixed(2)}</TableCell>
@@ -391,5 +405,3 @@ export default function BillingPage() {
     </div>
   );
 }
-
-    
