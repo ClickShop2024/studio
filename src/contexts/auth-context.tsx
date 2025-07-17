@@ -27,9 +27,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (storedUser) {
         const parsedUser: User = JSON.parse(storedUser);
         setUser(parsedUser);
-        const storedFavorites = localStorage.getItem(`click-shop-favorites-${parsedUser.id}`);
-        if (storedFavorites) {
-          setFavorites(JSON.parse(storedFavorites));
+        if (parsedUser.role === 'Customer') {
+            const storedFavorites = localStorage.getItem(`click-shop-favorites-${parsedUser.id}`);
+            if (storedFavorites) {
+              setFavorites(JSON.parse(storedFavorites));
+            }
         }
       }
     } catch (error) {
@@ -43,12 +45,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback((userData: User) => {
     setUser(userData);
     localStorage.setItem("click-shop-user", JSON.stringify(userData));
-    const userFavorites = localStorage.getItem(`click-shop-favorites-${userData.id}`);
-    setFavorites(userFavorites ? JSON.parse(userFavorites) : []);
+    if (userData.role === 'Customer') {
+        const userFavorites = localStorage.getItem(`click-shop-favorites-${userData.id}`);
+        setFavorites(userFavorites ? JSON.parse(userFavorites) : []);
+    }
   }, []);
 
   const logout = useCallback(() => {
-    if (user) {
+    if (user && user.role === 'Customer') {
         localStorage.removeItem(`click-shop-favorites-${user.id}`);
     }
     setUser(null);
@@ -57,7 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [user]);
 
   const toggleFavorite = useCallback((productId: string) => {
-    if (!user) return; 
+    if (!user || user.role !== 'Customer') return; 
 
     setFavorites(prevFavorites => {
       const newFavorites = prevFavorites.includes(productId)

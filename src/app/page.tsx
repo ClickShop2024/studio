@@ -40,18 +40,12 @@ export default function Home() {
       <Tabs defaultValue="Dama" className="w-full">
         <TabsList className="grid w-full grid-cols-3 sm:grid-cols-5">
           {categories.map((cat) => (
-            <TabsTrigger key={cat} value={cat}>{cat}</TabsTrigger>
+            <TabsTrigger key={cat} value={cat} disabled={cat === 'Favoritos' && !isAuthenticated}>{cat}</TabsTrigger>
           ))}
         </TabsList>
         {categories.map((cat) => (
           <TabsContent key={cat} value={cat}>
-            {cat === 'Favoritos' && !isAuthenticated ? (
-                <div className="text-center py-16">
-                    <p className="text-muted-foreground">
-                        <Link href="/login" className="underline font-semibold text-primary">Inicia sesión</Link> para ver tus favoritos.
-                    </p>
-                </div>
-            ) : getProductsForTab(cat).length > 0 ? (
+            {getProductsForTab(cat).length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                 {getProductsForTab(cat).map((product) => (
                   <ProductCard key={product.id} product={product} />
@@ -59,9 +53,15 @@ export default function Home() {
               </div>
             ) : (
               <div className="text-center py-16">
-                <p className="text-muted-foreground">
-                  {cat === 'Favoritos' ? 'No has guardado ningún favorito todavía.' : `No hay productos en la categoría ${cat}.`}
-                </p>
+                 {cat === 'Favoritos' && !isAuthenticated ? (
+                    <p className="text-muted-foreground">
+                        <Link href="/login" className="underline font-semibold text-primary">Inicia sesión</Link> para ver tus favoritos.
+                    </p>
+                 ) : (
+                    <p className="text-muted-foreground">
+                    {cat === 'Favoritos' ? 'No has guardado ningún favorito todavía.' : `No hay productos en la categoría ${cat}.`}
+                    </p>
+                 )}
               </div>
             )}
           </TabsContent>

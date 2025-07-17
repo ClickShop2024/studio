@@ -12,7 +12,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
-import type { User, Gender } from "@/lib/types"
+import type { User, Gender, Role } from "@/lib/types"
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "El nombre debe tener al menos 2 caracteres." }),
@@ -48,6 +48,7 @@ export function RegisterForm() {
       email: "",
       password: "",
       role: "Customer",
+      secretKey: "",
     },
   })
 
@@ -58,7 +59,7 @@ export function RegisterForm() {
         id: crypto.randomUUID(),
         name: values.name,
         email: values.email,
-        role: values.role,
+        role: values.role as Role,
         size: values.size,
         gender: values.gender as Gender,
     };

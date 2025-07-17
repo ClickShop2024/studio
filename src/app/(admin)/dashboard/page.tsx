@@ -7,11 +7,15 @@ import { BarChart, DollarSign, Package, Users } from 'lucide-react';
 export default function DashboardPage() {
   const { user } = useAuth();
 
+  if (!user) {
+    return null;
+  }
+
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold">Panel de {user?.role}</h1>
-        <p className="text-muted-foreground mt-2">Bienvenido, {user?.name}. Aquí tienes un resumen de la tienda.</p>
+        <h1 className="text-3xl font-bold">Panel de {user.role}</h1>
+        <p className="text-muted-foreground mt-2">Bienvenido, {user.name}. Aquí tienes un resumen de la tienda.</p>
       </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>

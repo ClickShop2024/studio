@@ -53,9 +53,17 @@ export function AppLayout({ children }: { children: ReactNode }) {
     { href: '/dashboard/users', label: 'Usuarios', icon: Users, roles: ['Administrator'] },
   ];
 
-  const navItems = user?.role === 'Administrator' || user?.role === 'Employee' 
-    ? adminNavItems.filter(item => item.roles.includes(user.role)) 
-    : mainNavItems;
+  const getNavItems = () => {
+    if (!isAuthenticated || !user) {
+      return mainNavItems;
+    }
+    if (user.role === 'Administrator' || user.role === 'Employee') {
+      return adminNavItems.filter(item => item.roles.includes(user.role));
+    }
+    return mainNavItems;
+  }
+
+  const navItems = getNavItems();
 
   const isAuthPage = pathname === '/login' || pathname === '/register';
 
@@ -64,10 +72,8 @@ export function AppLayout({ children }: { children: ReactNode }) {
   }
 
   const getPageTitle = () => {
-    if (user?.role && (user.role === 'Administrator' || user.role === 'Employee')) {
-      return adminNavItems.find(item => pathname.startsWith(item.href))?.label || 'Dashboard';
-    }
-    return mainNavItems.find(item => item.href === pathname)?.label || 'Click Shop';
+    const allNavItems = [...mainNavItems, ...adminNavItems];
+    return allNavItems.find(item => pathname === item.href)?.label || 'Click Shop';
   }
 
   return (
@@ -121,6 +127,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
                     <DropdownMenuLabel>
                         <p className="font-medium">{user.name}</p>
                         <p className="text-xs text-muted-foreground">{user.email}</p>
+                        <p className="text-xs text-muted-foreground font-bold pt-1">{user.role}</p>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => router.push('/settings')}>
