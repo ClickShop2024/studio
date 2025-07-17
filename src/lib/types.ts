@@ -25,3 +25,12 @@ export interface Product {
   stock: number;
   dataAiHint?: string;
 }
+
+export interface Offer {
+    id: string;
+    productId: string;
+    discountPrice: number;
+    startDate: Date;
+    endDate: Date;
+    description: string;
+}

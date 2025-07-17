@@ -1,3 +1,4 @@
+
 "use client";
 
 import Image from 'next/image';
@@ -11,9 +12,10 @@ import { useToast } from '@/hooks/use-toast';
 
 interface ProductCardProps {
   product: Product;
+  originalPrice?: number;
 }
 
-export function ProductCard({ product }: ProductCardProps) {
+export function ProductCard({ product, originalPrice }: ProductCardProps) {
   const { isAuthenticated, toggleFavorite, isFavorite } = useAuth();
   const { toast } = useToast();
   const isFav = isFavorite(product.id);
@@ -48,7 +50,7 @@ export function ProductCard({ product }: ProductCardProps) {
         <Button
           size="icon"
           variant="secondary"
-          className="absolute top-3 right-3 rounded-full h-9 w-9 bg-background/70 hover:bg-background"
+          className="absolute top-3 right-3 rounded-full h-9 w-9 bg-background/70 hover:bg-background z-10"
           onClick={handleFavoriteClick}
           aria-label="Añadir a favoritos"
         >
@@ -60,7 +62,12 @@ export function ProductCard({ product }: ProductCardProps) {
         <CardDescription className="text-sm mt-1 line-clamp-2">{product.description}</CardDescription>
       </CardContent>
       <CardFooter className="p-4 pt-0 flex justify-between items-center">
-        <p className="text-xl font-bold text-primary">${product.price.toFixed(2)}</p>
+        <div className="flex items-baseline gap-2">
+            <p className="text-xl font-bold text-primary">${product.price.toFixed(2)}</p>
+            {originalPrice && (
+                <p className="text-sm font-medium text-muted-foreground line-through">${originalPrice.toFixed(2)}</p>
+            )}
+        </div>
         <Button variant="default">Añadir al Carrito</Button>
       </CardFooter>
     </Card>

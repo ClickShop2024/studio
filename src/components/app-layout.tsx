@@ -4,7 +4,7 @@
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Home, ShoppingBag, Tag, MessageSquare, Settings, User as UserIcon, LogIn, LogOut, Sun, Moon, Package, BarChart, DollarSign, Users, ShieldCheck } from 'lucide-react';
+import { Home, ShoppingBag, Tag, MessageSquare, Settings, User as UserIcon, LogIn, LogOut, Sun, Moon, Package, BarChart, DollarSign, Users, ShieldCheck, BadgePercent } from 'lucide-react';
 import {
   SidebarProvider,
   Sidebar,
@@ -51,6 +51,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
     { href: '/dashboard', label: 'Dashboard', icon: BarChart, roles: ['Administrator', 'Employee'] },
     { href: '/dashboard/inventory', label: 'Inventario', icon: Package, roles: ['Administrator', 'Employee'] },
     { href: '/dashboard/billing', label: 'Facturación', icon: DollarSign, roles: ['Administrator'] },
+    { href: '/dashboard/offers', label: 'Ofertas', icon: BadgePercent, roles: ['Administrator'] },
     { href: '/dashboard/users', label: 'Usuarios', icon: Users, roles: ['Administrator'] },
   ];
 
@@ -82,7 +83,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
     ];
     
     // Find a matching item for the current path
-    const currentNavItem = allNavItems.find(item => pathname === item.href);
+    const currentNavItem = allNavItems.find(item => pathname.startsWith(item.href) && (item.href !== '/' || pathname === '/'));
 
     if (currentNavItem) {
         return currentNavItem.label;
