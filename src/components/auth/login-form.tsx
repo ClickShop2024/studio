@@ -1,3 +1,4 @@
+
 "use client"
 
 import Link from "next/link"
@@ -12,6 +13,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input"
 import { useToast } from "@/hooks/use-toast"
 import type { User } from "@/lib/types"
+import { useEffect, useState } from "react"
 
 const formSchema = z.object({
   email: z.string().email({ message: "Por favor ingresa un email válido." }),
@@ -22,11 +24,19 @@ export function LoginForm() {
   const router = useRouter()
   const { login } = useAuth()
   const { toast } = useToast()
+  const [defaultEmail, setDefaultEmail] = useState("");
+
+  useEffect(() => {
+    const lastEmail = localStorage.getItem("click-shop-last-login-email");
+    if (lastEmail) {
+      setDefaultEmail(lastEmail);
+    }
+  }, []);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      email: "",
+    values: {
+      email: defaultEmail,
       password: "",
     },
   })
@@ -39,6 +49,7 @@ export function LoginForm() {
         const loginSuccess = login(user);
         
         if (loginSuccess) {
+            localStorage.setItem("click-shop-last-login-email", values.email);
             toast({
                 title: "Inicio de sesión exitoso",
                 description: `Bienvenido de nuevo, ${user.name}!`,
