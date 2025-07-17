@@ -11,14 +11,12 @@ import { SmartSuggestions } from '@/components/smart-suggestions';
 import { NotificationDialog } from '@/components/notification-dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
-import { Search } from 'lucide-react';
+import { Search, Heart } from 'lucide-react';
 
 export default function Home() {
-  const { user, favorites, isAuthenticated } = useAuth();
+  const { user } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeCategory, setActiveCategory] = useState('Todos');
 
   useEffect(() => {
     const storedProducts = localStorage.getItem('click-shop-products');
@@ -27,7 +25,6 @@ export default function Home() {
     } else {
       setProducts(initialProducts);
     }
-    // Set up a listener for storage changes to sync across tabs
     const handleStorageChange = (event: StorageEvent) => {
         if (event.key === 'click-shop-products' && event.newValue) {
             setProducts(JSON.parse(event.newValue));
@@ -38,32 +35,13 @@ export default function Home() {
         window.removeEventListener('storage', handleStorageChange);
     };
   }, []);
+  
+  const availableProducts = products.filter(p => p.stock > 0);
 
-  const categories = ['Todos', 'Ropa femenina', 'Accesorios', 'Calzado', 'Especiales', 'Favoritos'];
-
-  const getProductsByCategory = (category: string): Product[] => {
-    const availableProducts = products.filter(p => p.stock > 0);
-    switch (category) {
-      case 'Todos':
-        return availableProducts;
-      case 'Ropa femenina':
-        return availableProducts.filter(p => p.category === 'Dama' || p.category === 'Vestidos');
-      case 'Accesorios':
-        return availableProducts.filter(p => p.category === 'Accesorios');
-      case 'Calzado':
-        // Placeholder, no products in this category yet
-        return [];
-      case 'Especiales':
-        return availableProducts.filter(p => p.category === 'Ofertas' || p.price < 40);
-      case 'Favoritos':
-        return isAuthenticated ? availableProducts.filter(p => favorites.includes(p.id)) : [];
-      default:
-        return [];
-    }
-  };
-
-  const filteredProducts = getProductsByCategory(activeCategory).filter(product =>
-    product.name.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredProducts = availableProducts.filter(product =>
+    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    product.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    product.price.toString().includes(searchTerm)
   );
 
   return (
@@ -76,30 +54,22 @@ export default function Home() {
 
       {user?.role === 'Customer' && <SmartSuggestions />}
 
-      <div className="space-y-4">
-        <div className="relative">
+      <div className="flex gap-4 items-center">
+        <div className="relative flex-grow">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <Input
               type="search"
-              placeholder="Buscar productos..."
+              placeholder="Buscar por nombre, categoría o precio..."
               className="w-full pl-10"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
         </div>
-        <div className="flex flex-wrap gap-2">
-          {categories.map((cat) => (
-            <Button
-              key={cat}
-              variant={activeCategory === cat ? 'default' : 'outline'}
-              onClick={() => setActiveCategory(cat)}
-              disabled={cat === 'Favoritos' && !isAuthenticated}
-              className="transition-all"
-            >
-              {cat}
+         <Link href="/categories?filter=Favoritos" passHref>
+            <Button variant="outline" size="icon" aria-label="Ver favoritos">
+                <Heart />
             </Button>
-          ))}
-        </div>
+         </Link>
       </div>
 
       <div>
@@ -111,20 +81,12 @@ export default function Home() {
           </div>
         ) : (
           <div className="text-center py-16">
-            {activeCategory === 'Favoritos' && !isAuthenticated ? (
-              <p className="text-muted-foreground">
-                <Link href="/login" className="underline font-semibold text-primary">Inicia sesión</Link> para ver tus favoritos.
+             <p className="text-muted-foreground">
+                {searchTerm === '' ? 'Todos los productos están agotados.' : 'No se encontraron productos que coincidan con tu búsqueda.'}
               </p>
-            ) : (
-                 <p className="text-muted-foreground">
-                {activeCategory === 'Todos' && searchTerm === '' ? 'Todos los productos están agotados.' : 'No se encontraron productos que coincidan con tu búsqueda o filtro.'}
-              </p>
-            )}
           </div>
         )}
       </div>
     </div>
   );
 }
-
-    
