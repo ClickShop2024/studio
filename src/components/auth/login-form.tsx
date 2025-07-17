@@ -32,22 +32,29 @@ export function LoginForm() {
   })
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    // This is mock auth. In a real app, you'd call an API.
-    // We'll check if a user with this email exists in localStorage from registration.
     const storedUser = localStorage.getItem(`user-${values.email}`);
 
     if (storedUser) {
         const user: User = JSON.parse(storedUser);
-        // In real world, you would also check the password hash. Here we just log in.
-        login(user);
-        toast({
-            title: "Inicio de sesión exitoso",
-            description: `Bienvenido de nuevo, ${user.name}!`,
-        });
-        if (user.role === 'Administrator' || user.role === 'Employee') {
-            router.push('/dashboard');
+        const loginSuccess = login(user);
+        
+        if (loginSuccess) {
+            toast({
+                title: "Inicio de sesión exitoso",
+                description: `Bienvenido de nuevo, ${user.name}!`,
+            });
+            if (user.role === 'Administrator' || user.role === 'Employee') {
+                router.push('/dashboard');
+            } else {
+                router.push('/');
+            }
         } else {
-            router.push('/');
+            // This happens if the user is blocked
+             toast({
+                title: "Acceso denegado",
+                description: "Tu cuenta ha sido bloqueada por el administrador. Para más información, contáctanos.",
+                variant: "destructive",
+            });
         }
     } else {
         toast({

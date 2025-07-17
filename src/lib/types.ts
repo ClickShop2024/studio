@@ -2,6 +2,8 @@ export type Role = 'Customer' | 'Employee' | 'Administrator';
 
 export type Gender = 'male' | 'female' | 'other';
 
+export type UserStatus = 'active' | 'blocked';
+
 export interface User {
   id: string;
   name: string;
@@ -9,6 +11,8 @@ export interface User {
   role: Role;
   size?: string;
   gender?: Gender;
+  status: UserStatus;
+  lastLogin?: string;
 }
 
 export interface Product {

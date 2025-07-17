@@ -62,20 +62,24 @@ export function RegisterForm() {
         role: values.role as Role,
         size: values.size,
         gender: values.gender as Gender,
+        status: 'active',
+        lastLogin: new Date().toISOString(),
     };
     
     // Mock registration: save to localStorage. A real app would use an API.
     localStorage.setItem(`user-${newUser.email}`, JSON.stringify(newUser));
 
-    login(newUser);
-    toast({
-        title: "Registro exitoso",
-        description: `¡Bienvenido, ${newUser.name}!`,
-    });
-    if (newUser.role === 'Administrator' || newUser.role === 'Employee') {
-        router.push('/dashboard');
-    } else {
-        router.push('/');
+    const loginSuccess = login(newUser);
+    if(loginSuccess) {
+      toast({
+          title: "Registro exitoso",
+          description: `¡Bienvenido, ${newUser.name}!`,
+      });
+      if (newUser.role === 'Administrator' || newUser.role === 'Employee') {
+          router.push('/dashboard');
+      } else {
+          router.push('/');
+      }
     }
   }
 
