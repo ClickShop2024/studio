@@ -4,7 +4,7 @@
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Home, ShoppingBag, Tag, MessageSquare, Settings, User as UserIcon, LogIn, LogOut, Sun, Moon, Package, BarChart, DollarSign, Users, ShieldCheck, BadgePercent } from 'lucide-react';
+import { Home, ShoppingBag, Tag, MessageSquare, Settings, User as UserIcon, LogIn, LogOut, Sun, Moon, Package, BarChart, DollarSign, Users, ShieldCheck, BadgePercent, ArrowLeft } from 'lucide-react';
 import {
   SidebarProvider,
   Sidebar,
@@ -70,7 +70,19 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const isAuthPage = pathname === '/login' || pathname === '/register';
 
   if (isAuthPage) {
-    return <main className="min-h-screen flex items-center justify-center p-4 bg-background">{children}</main>;
+    return (
+        <main className="relative min-h-screen flex items-center justify-center p-4 bg-background">
+            <Button 
+                variant="ghost" 
+                className="absolute top-6 left-6" 
+                onClick={() => router.back()}
+            >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Regresar
+            </Button>
+            {children}
+        </main>
+    );
   }
 
   const getPageTitle = () => {
