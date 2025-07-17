@@ -19,6 +19,10 @@ export default function Home() {
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
+    // Track catalog visit
+    const visits = parseInt(localStorage.getItem('click-shop-catalog-visits') || '0', 10);
+    localStorage.setItem('click-shop-catalog-visits', (visits + 1).toString());
+
     const storedProducts = localStorage.getItem('click-shop-products');
     if (storedProducts) {
       setProducts(JSON.parse(storedProducts));

@@ -20,6 +20,10 @@ export default function CategoriesPage() {
   const [activeCategory, setActiveCategory] = useState(initialCategory);
 
   useEffect(() => {
+    // Track catalog visit
+    const visits = parseInt(localStorage.getItem('click-shop-catalog-visits') || '0', 10);
+    localStorage.setItem('click-shop-catalog-visits', (visits + 1).toString());
+
     const storedProducts = localStorage.getItem('click-shop-products');
     if (storedProducts) {
       setProducts(JSON.parse(storedProducts));
@@ -111,4 +115,3 @@ export default function CategoriesPage() {
     </div>
   );
 }
-
