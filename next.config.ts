@@ -1,7 +1,7 @@
-import type {NextConfig} from 'next';
+import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  output: 'export', // ⬅️ Esta línea activa el modo estático
   typescript: {
     ignoreBuildErrors: true,
   },
