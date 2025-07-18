@@ -3,7 +3,7 @@ name: Deploy to Firebase Hosting on push
 on:
   push:
     branches:
-      - master  # Cambia si tu rama se llama diferente
+      - master  # Cambia si tu rama es diferente
 
 jobs:
   build_and_deploy:
@@ -21,15 +21,12 @@ jobs:
       - name: 📦 Instalar dependencias
         run: npm install
 
-      - name: 🏗️ Compilar Next.js
+      - name: 🏗️ Compilar Next.js (con output: 'export')
         run: npm run build
-
-      - name: 🚀 Exportar sitio estático
-        run: npx next export
 
       - name: 📤 Deploy en Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-          channelId: liveS
+          channelId: live  # ← O usa "preview" si prefieres
